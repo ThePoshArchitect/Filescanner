@@ -6,7 +6,7 @@ param (
 )
 
 import-module pwshspectreconsole
-import-module exportexcel
+
 function Format-Size {
     param ([long]$Bytes)
 
