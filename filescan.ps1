@@ -1,8 +1,8 @@
 param (
-    [string]$Path = "C:\Users\kkerr",
+    [string]$Path = "C:\python312",
     [string]$ReportPath = "FileAuditReport.csv",
      [int]$DaysOld = 180,
-    [int]$MinSizeMB = 500
+    [int]$MinSizeMB = 2
 )
 
 import-module pwshspectreconsole
@@ -25,22 +25,33 @@ function Audit-LargeFilesOnly {
     param (
         [string]$TargetPath,
         [int]$MinSizeMB,
-        [string]$OutputFile
+        [string]$OutputFile,
+        [switch]$ScanAllFiles
     )
 
     $minBytes = $MinSizeMB * 1MB
     $results = @()
 
-    Write-Host "Scanning for files larger than $MinSizeMB MB in: $TargetPath" -ForegroundColor Cyan
+    if ($ScanAllFiles) {
+        Write-Host "Scanning ALL files in: $TargetPath" -ForegroundColor Cyan
+    } else {
+        Write-Host "Scanning for files larger than $MinSizeMB MB in: $TargetPath" -ForegroundColor Cyan
+    }
 
     try {
         Get-ChildItem -Path $TargetPath -Recurse -File -ErrorAction SilentlyContinue | ForEach-Object {
             $sizeBytes = $_.Length
 
-            if ($sizeBytes -ge $minBytes) {
+            # Include file if scanning all files OR if it meets the size threshold
+            if ($ScanAllFiles -or ($sizeBytes -ge $minBytes)) {
                 $results += [PSCustomObject]@{
-                    FilePath        = $_.FullName
+                    FullName        = $_.FullName
+                    Extension       = $_.Extension
+                    Length          = $_.Length
+                    CreationTime    = $_.CreationTime
+                    LastWriteTime   = $_.LastWriteTime
                     LastAccessTime  = $_.LastAccessTime
+                    DirectoryName   = $_.DirectoryName
                     Size            = Format-Size $sizeBytes
                 }
             }
@@ -49,9 +60,18 @@ function Audit-LargeFilesOnly {
         if ($results.Count -gt 0) {
             $results | Export-Csv -Path $OutputFile -NoTypeInformation -Encoding UTF8
             Write-Host "`nReport saved to: $OutputFile" -ForegroundColor Green
-            $results | Format-SpectreTable -Title "Large Files Report" | Out-SpectreHost
+            
+            if ($ScanAllFiles) {
+                $results | Format-SpectreTable -Title "All Files Report" | Out-SpectreHost
+            } else {
+                $results | Format-SpectreTable -Title "Large Files Report" | Out-SpectreHost
+            }
         } else {
-            Write-Host "`nNo large files found in $TargetPath." -ForegroundColor Yellow
+            if ($ScanAllFiles) {
+                Write-Host "`nNo files found in $TargetPath." -ForegroundColor Yellow
+            } else {
+                Write-Host "`nNo large files found in $TargetPath." -ForegroundColor Yellow
+            }
         }
     } catch {
         Write-Error "Audit failed: $_"
