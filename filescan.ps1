@@ -3,7 +3,7 @@ param (
     [string]$ReportPath = "FileAuditReport.csv",
     [string]$xlsReportPath = "FileAuditReport.xlsx",
     [int]$DaysOld = 180,   # kept for future use
-    [int]$MinSizeMB = 50
+    [int]$MinSizeMB = 500
 )
 
 Import-Module pwshspectreconsole
