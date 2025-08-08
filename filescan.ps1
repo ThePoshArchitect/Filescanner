@@ -1,8 +1,9 @@
 param (
     [string]$Path = "C:\python312",
     [string]$ReportPath = "FileAuditReport.csv",
-     [int]$DaysOld = 180,
-    [int]$MinSizeMB = 2
+    [string]$xlsReportPath = "FileAuditReport.xlsx",
+    [int]$DaysOld = 180,   # kept for future use
+    [int]$MinSizeMB = 500
 )
 
 import-module pwshspectreconsole
